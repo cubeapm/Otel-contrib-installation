@@ -8,30 +8,33 @@ A robust bash script for installing OpenTelemetry Collector Contrib on Linux sys
 - **Multi-architecture support**: x86_64, amd64, aarch64, arm64
 - **Multi-distro support**: Ubuntu, Debian, RHEL, CentOS, Amazon Linux, SUSE
 - **Smart cleanup**: Automatically removes existing installations
-- **Custom configuration**: Optional config file replacement
+- **Custom configuration**: Replaces package config with custom config by default
 - **Version flexibility**: Specify any collector version
 
 ## Quick Start
 
 ```bash
-# Interactive installation (default)
+# Interactive installation with custom config (default)
 sudo ./otel-contrib-install.sh
 
-# Basic mode for automation
+# Basic mode for automation with custom config
 sudo ./otel-contrib-install.sh --mode basic
 
-# Specific version with custom config
-sudo ./otel-contrib-install.sh --version 0.125.0 --replace-config
+# Keep package default config instead of custom config
+sudo ./otel-contrib-install.sh --no-replace-config
+
+# Specific version with package default config
+sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
 ```
 
 ## Options
 
-| Option             | Description                        | Default       |
-| ------------------ | ---------------------------------- | ------------- |
-| `--mode`           | `interactive` or `basic`           | `interactive` |
-| `--version`        | Collector version (e.g., 0.126.0)  | `0.126.0`     |
-| `--replace-config` | Replace default config with custom | `false`       |
-| `--help`           | Show usage information             | -             |
+| Option                | Description                                   | Default       |
+| --------------------- | --------------------------------------------- | ------------- |
+| `--mode`              | `interactive` or `basic`                      | `interactive` |
+| `--version`           | Collector version (e.g., 0.126.0)             | `0.126.0`     |
+| `--no-replace-config` | Skip replacing config (keeps package default) | `false`       |
+| `--help`              | Show usage information                        | -             |
 
 ## Requirements
 
@@ -46,8 +49,24 @@ sudo ./otel-contrib-install.sh --version 0.125.0 --replace-config
 2. Removes existing installations cleanly
 3. Downloads appropriate collector binary
 4. Installs via package manager (deb/rpm) or tar
-5. Optionally downloads and installs custom config
+5. Downloads and installs custom config (by default)
 6. Sets up systemd service
+
+## Post-Installation
+
+```bash
+# Start the service
+sudo systemctl start otelcol-contrib
+
+# Check status
+sudo systemctl status otelcol-contrib
+
+# View logs
+sudo journalctl -u otelcol-contrib -f
+
+# Edit config
+sudo nano /etc/otelcol-contrib/config.yaml
+```
 
 ## File Locations
 

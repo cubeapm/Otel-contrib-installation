@@ -13,14 +13,14 @@ OTEL_SERVICE_NAME="otelcol-contrib"
 OTEL_SERVICE_PATH="/usr/local/bin/${OTEL_SERVICE_NAME}"
 OTEL_CONFIG_DIR="/etc/otelcol-contrib"
 OTEL_CONFIG_FILE="${OTEL_CONFIG_DIR}/config.yaml"
-OTEL_CONFIG_URL="https://downloads/config.yaml"
+OTEL_CONFIG_URL="https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/config.yaml"
 
 # Supported architectures (Linux only as per requirements)
 LINUX_SUPPORTED_ARCH=("x86_64" "amd64" "aarch64" "arm64")
 
 # Script modes
 MODE="interactive"  # Default mode: interactive or basic
-REPLACE_CONFIG=false  # Whether to replace config file
+REPLACE_CONFIG=true  # Whether to replace config file (now default is true)
 
 # Colors for interactive mode
 GREEN='\033[0;32m'
@@ -39,7 +39,7 @@ show_usage() {
     echo "OPTIONS:"
     echo "  --mode MODE          Set installation mode: 'interactive' (default) or 'basic'"
     echo "  --version VERSION    Specify OTEL Collector version (default: 0.126.0)"
-    echo "  --replace-config     Replace the default config with custom OTEL config"
+    echo "  --no-replace-config  Skip replacing the default config (keeps package default)"
     echo "  --help               Show this help message"
     echo ""
     echo "MODES:"
@@ -47,11 +47,11 @@ show_usage() {
     echo "  basic               Simple output for automation (success/failed only)"
     echo ""
     echo "Examples:"
-    echo "  $0                                    # Interactive mode, default version, no config replacement"
-    echo "  $0 --mode basic                      # Basic mode, default version, no config replacement"
-    echo "  $0 --version 0.125.0                 # Interactive mode, specific version, no config replacement"
-    echo "  $0 --replace-config                  # Interactive mode, default version with config replacement"
-    echo "  $0 --mode basic --version 0.125.0 --replace-config  # Basic mode, specific version with config replacement"
+    echo "  $0                                    # Interactive mode, default version, with config replacement"
+    echo "  $0 --mode basic                      # Basic mode, default version, with config replacement"
+    echo "  $0 --version 0.125.0                 # Interactive mode, specific version, with config replacement"
+    echo "  $0 --no-replace-config               # Interactive mode, default version, no config replacement"
+    echo "  $0 --mode basic --version 0.125.0 --no-replace-config  # Basic mode, specific version, no config replacement"
 }
 
 # Parse command line arguments
@@ -81,8 +81,8 @@ parse_args() {
                 OTEL_BASE_URL="https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v${OTEL_VERSION}"
                 shift 2
                 ;;
-            --replace-config)
-                REPLACE_CONFIG=true
+            --no-replace-config)
+                REPLACE_CONFIG=false
                 shift
                 ;;
             --help)
