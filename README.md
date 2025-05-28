@@ -42,22 +42,6 @@ sudo ./otel-contrib-install.sh --mode basic
 sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
 ```
 
-## Quick Start
-
-```bash
-# Interactive installation with custom config (default)
-sudo ./otel-contrib-install.sh
-
-# Basic mode for automation with custom config
-sudo ./otel-contrib-install.sh --mode basic
-
-# Keep package default config instead of custom config
-sudo ./otel-contrib-install.sh --no-replace-config
-
-# Specific version with package default config
-sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
-```
-
 ## Options
 
 | Option                | Description                                   | Default       |
