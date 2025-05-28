@@ -11,6 +11,37 @@ A robust bash script for installing OpenTelemetry Collector Contrib on Linux sys
 - **Custom configuration**: Replaces package config with custom config by default
 - **Version flexibility**: Specify any collector version
 
+## Installation Methods
+
+### Method 1: Direct execution via curl (Recommended)
+
+```bash
+# Default installation (interactive mode with custom config)
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)"
+
+# With custom arguments - use -- to separate curl options from script options
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --mode basic
+
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --version 0.125.0 --no-replace-config
+
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --mode basic --version 0.125.0
+```
+
+### Method 2: Download and execute locally
+
+```bash
+# Download the script
+curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh -o otel-contrib-install.sh
+
+# Make it executable
+chmod +x otel-contrib-install.sh
+
+# Run with desired options
+sudo ./otel-contrib-install.sh
+sudo ./otel-contrib-install.sh --mode basic
+sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
+```
+
 ## Quick Start
 
 ```bash
