@@ -1,0 +1,161 @@
+# Individual infra agents are configured in the receivers section below.
+# The list of available agents and their documentation is available at
+# https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver
+receivers:
+  # hostmetrics monitors host machines (bare metal, ec2, etc.)
+  # It collects metrics for CPU, memory, etc. on the host
+  # where the collector is running.
+  hostmetrics:
+    collection_interval: 60s
+    scrapers:
+      cpu:
+      disk:
+      # load:
+      filesystem:
+      memory:
+      network:
+      # paging:
+      # processes:
+      # process:
+      #   mute_process_all_errors: true
+
+  redis/redis-1:
+    endpoint: localhost:6379
+    collection_interval: 60s
+    resource_attributes:
+      server.address:
+        enabled: true
+    metrics:
+      redis.cmd.calls:
+        enabled: true
+
+  redis/redis-2:
+    endpoint: localhost:6379
+    collection_interval: 60s
+    resource_attributes:
+      server.address:
+        enabled: true
+    metrics:
+      redis.cmd.calls:
+        enabled: true
+
+  memcached:
+    endpoint: localhost:11211
+    transport: tcp
+    collection_interval: 60s
+
+  mysql:
+    endpoint: localhost:3306
+    username: cubeapm
+    password: mypassword
+    collection_interval: 60s
+    metrics:
+      mysql.commands:
+        enabled: true
+      mysql.connection.count:
+        enabled: true
+      mysql.connection.errors:
+        enabled: true
+      mysql.query.count:
+        enabled: true
+      mysql.query.slow.count:
+        enabled: true
+      mysql.joins:
+        enabled: true
+      mysql.replica.sql_delay:
+        enabled: true
+      mysql.replica.time_behind_source:
+        enabled: true
+      mysql.index.io.wait.time:
+        enabled: false
+      mysql.index.io.wait.count:
+        enabled: false
+      mysql.table.io.wait.time:
+        enabled: false
+      mysql.table.io.wait.count:
+        enabled: false
+
+  postgresql:
+    endpoint: localhost:5432
+    transport: tcp
+    username: cubeapm
+    password: mypassword
+    # databases:
+    #   - otel
+    # exclude_databases:
+    #   - rdsadmin
+    collection_interval: 60s
+    tls:
+      insecure: true
+
+  mongodb:
+    hosts:
+      - endpoint: localhost:27017
+    # username: cubeapm
+    # password: mypassword
+    collection_interval: 60s
+    tls:
+      insecure: true
+      # ca_file: /etc/otelcol-contrib/global-bundle.pem
+
+  nginx:
+    endpoint: http://localhost:80/status
+    collection_interval: 60s
+
+processors:
+  batch:
+
+  resourcedetection:
+    detectors:
+      - system
+    system:
+      hostname_sources: ["os"]
+
+  # resource/cube.environment:
+  #   attributes:
+  #     - key: cube.environment
+  #       value: UNSET
+  #       action: upsert
+
+exporters:
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 1
+
+  otlphttp:
+    metrics_endpoint: http://<cubeapm_endpoint>:3130/api/metrics/v1/save/otlp
+    retry_on_failure:
+      enabled: false
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+        # Individual infra monitoring agents can be disabled
+        # by commenting them out here.
+        - hostmetrics
+        # - redis
+        # - memcached
+        # - mysql
+        # - postgresql
+        # - mongodb
+        # - nginx
+      processors:
+        - batch
+        - resourcedetection
+        # - resource/cube.environment
+      exporters:
+        - otlphttp
+        # - debug
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "localhost"
+                port: 8888
