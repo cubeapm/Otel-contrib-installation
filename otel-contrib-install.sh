@@ -359,20 +359,20 @@ check_architecture() {
             ;;
         "arm64_tar"|"amd64_tar")
             if [[ $arch_name == "amd64" ]]; then
-                download_file="otelcol-k8s_${OTEL_VERSION}_linux_amd64.tar.gz"
+                download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.tar.gz"
             else
                 download_file="otelcol-contrib_${OTEL_VERSION}_linux_arm64.tar.gz"
             fi
             ;;
         "amd64_deb")
-            # For amd64 deb, we'll use the k8s version as it's more commonly available
-            download_file="otelcol-k8s_${OTEL_VERSION}_linux_amd64.tar.gz"
+            # For amd64 deb, we'll use the contrib tar version
+            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.tar.gz"
             package_manager="tar"
             install_cmd="tar"
             ;;
         "amd64_rpm")
-            # For amd64 rpm, we'll use the k8s version as it's more commonly available
-            download_file="otelcol-k8s_${OTEL_VERSION}_linux_amd64.tar.gz"
+            # For amd64 rpm, we'll use the contrib tar version
+            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.tar.gz"
             package_manager="tar"
             install_cmd="tar"
             ;;
@@ -439,10 +439,10 @@ install_otel() {
             # Find the binary in the extracted files
             if [[ -f "otelcol-contrib" ]]; then
                 binary_name="otelcol-contrib"
-            elif [[ -f "otelcol-k8s" ]]; then
-                binary_name="otelcol-k8s"
             else
-                log_error "No OTEL binary found in extracted files"
+                log_error "No OTEL contrib binary found in extracted files"
+                log_error "Expected: otelcol-contrib"
+                log_error "Available files:"
                 ls -la
                 return 1
             fi
