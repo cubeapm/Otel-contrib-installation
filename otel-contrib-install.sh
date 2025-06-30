@@ -20,7 +20,7 @@ LINUX_SUPPORTED_ARCH=("x86_64" "amd64" "aarch64" "arm64")
 
 # Script modes
 MODE="interactive"  # Default mode: interactive or basic
-REPLACE_CONFIG=true  # Whether to replace config file (now default is true)
+REPLACE_CONFIG=false  # Whether to replace config file (default is false)
 
 # Colors for interactive mode
 GREEN='\033[0;32m'
@@ -39,7 +39,7 @@ show_usage() {
     echo "OPTIONS:"
     echo "  --mode MODE          Set installation mode: 'interactive' (default) or 'basic'"
     echo "  --version VERSION    Specify OTEL Collector version (default: 0.126.0)"
-    echo "  --no-replace-config  Skip replacing the default config (keeps package default)"
+    echo "  --replace-config     Replace the default config with custom config (default: keep package default)"
     echo "  --help               Show this help message"
     echo ""
     echo "MODES:"
@@ -47,11 +47,11 @@ show_usage() {
     echo "  basic               Simple output for automation (success/failed only)"
     echo ""
     echo "Examples:"
-    echo "  $0                                    # Interactive mode, default version, with config replacement"
-    echo "  $0 --mode basic                      # Basic mode, default version, with config replacement"
-    echo "  $0 --version 0.125.0                 # Interactive mode, specific version, with config replacement"
-    echo "  $0 --no-replace-config               # Interactive mode, default version, no config replacement"
-    echo "  $0 --mode basic --version 0.125.0 --no-replace-config  # Basic mode, specific version, no config replacement"
+    echo "  $0                                    # Interactive mode, default version, keep package config"
+    echo "  $0 --mode basic                      # Basic mode, default version, keep package config"
+    echo "  $0 --version 0.125.0                 # Interactive mode, specific version, keep package config"
+    echo "  $0 --replace-config                  # Interactive mode, default version, replace with custom config"
+    echo "  $0 --mode basic --version 0.125.0 --replace-config     # Basic mode, specific version, replace with custom config"
 }
 
 # Parse command line arguments
@@ -81,8 +81,8 @@ parse_args() {
                 OTEL_BASE_URL="https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v${OTEL_VERSION}"
                 shift 2
                 ;;
-            --no-replace-config)
-                REPLACE_CONFIG=false
+            --replace-config)
+                REPLACE_CONFIG=true
                 shift
                 ;;
             --help)
@@ -365,16 +365,10 @@ check_architecture() {
             fi
             ;;
         "amd64_deb")
-            # For amd64 deb, we'll use the contrib tar version
-            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.tar.gz"
-            package_manager="tar"
-            install_cmd="tar"
+            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.deb"
             ;;
         "amd64_rpm")
-            # For amd64 rpm, we'll use the contrib tar version
-            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.tar.gz"
-            package_manager="tar"
-            install_cmd="tar"
+            download_file="otelcol-contrib_${OTEL_VERSION}_linux_amd64.rpm"
             ;;
         *)
             return 1
@@ -500,59 +494,8 @@ create_config() {
     else
         log_error "Failed to download config file from: $OTEL_CONFIG_URL"
         log_error "HTTP status code: $status_code"
-        
-        # Fallback: create a basic config file
-        log_info "Creating fallback configuration file"
-        if ! cat > "$temp_config" << 'EOF'
-# OpenTelemetry Collector Contrib Configuration
-# Fallback configuration - download failed
-
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
-
-processors:
-  batch:
-    timeout: 1s
-    send_batch_size: 1024
-  
-  memory_limiter:
-    limit_mib: 512
-
-exporters:
-  logging:
-    loglevel: info
-
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [logging]
-    
-    metrics:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [logging]
-    
-    logs:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [logging]
-
-  extensions: []
-EOF
-        then
-            log_error "Failed to create fallback config file"
-            return 1
-        else
-            log_warning "Using fallback configuration file"
-            return 0
-        fi
+        log_error "Config download is mandatory - no fallback will be used"
+        return 1
     fi
 }
 
@@ -582,9 +525,12 @@ replace_config() {
     
     # Backup existing config if it exists
     if [[ -f "$OTEL_CONFIG_FILE" ]]; then
-        log_info "Backing up existing config: ${OTEL_CONFIG_FILE}.backup"
-        if ! cp "$OTEL_CONFIG_FILE" "${OTEL_CONFIG_FILE}.backup"; then
+        local backup_file="${OTEL_CONFIG_FILE%/*}/config_$(date +%Y%m%d_%H%M%S).yaml"
+        log_info "Backing up existing config: $backup_file"
+        if ! cp "$OTEL_CONFIG_FILE" "$backup_file"; then
             log_warning "Failed to backup existing config"
+        else
+            log_success "Config backed up successfully: $backup_file"
         fi
     fi
     

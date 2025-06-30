@@ -6,9 +6,9 @@ A robust bash script for installing OpenTelemetry Collector Contrib on Linux sys
 
 - **Dual modes**: Interactive (with progress bars & ASCII art) or basic (for automation)
 - **Multi-architecture support**: x86_64, amd64, aarch64, arm64
-- **Multi-distro support**: Ubuntu, Debian, RHEL, CentOS, Amazon Linux, SUSE
+- **Multi-distro support**: Ubuntu, Debian, RHEL, CentOS, Oracle Linux, Amazon Linux, SUSE
 - **Smart cleanup**: Automatically removes existing installations
-- **Custom configuration**: Replaces package config with custom config by default
+- **Flexible configuration**: Option to replace package config with custom config
 - **Version flexibility**: Specify any collector version
 
 ## Installation Methods
@@ -16,13 +16,13 @@ A robust bash script for installing OpenTelemetry Collector Contrib on Linux sys
 ### Method 1: Direct execution via curl (Recommended)
 
 ```bash
-# Default installation (interactive mode with custom config)
+# Default installation (interactive mode, keeps package config)
 sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)"
 
 # With custom arguments - use -- to separate curl options from script options
 sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --mode basic
 
-sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --version 0.125.0 --no-replace-config
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --version 0.125.0 --replace-config
 
 sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/cubeapm/Otel-contrib-installation/main/otel-contrib-install.sh)" -- --mode basic --version 0.125.0
 ```
@@ -39,21 +39,21 @@ chmod +x otel-contrib-install.sh
 # Run with desired options
 sudo ./otel-contrib-install.sh
 sudo ./otel-contrib-install.sh --mode basic
-sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
+sudo ./otel-contrib-install.sh --version 0.125.0 --replace-config
 ```
 
 ## Options
 
-| Option                | Description                                   | Default       |
-| --------------------- | --------------------------------------------- | ------------- |
-| `--mode`              | `interactive` or `basic`                      | `interactive` |
-| `--version`           | Collector version (e.g., 0.126.0)             | `0.126.0`     |
-| `--no-replace-config` | Skip replacing config (keeps package default) | `false`       |
-| `--help`              | Show usage information                        | -             |
+| Option             | Description                               | Default       |
+| ------------------ | ----------------------------------------- | ------------- |
+| `--mode`           | `interactive` or `basic`                  | `interactive` |
+| `--version`        | Collector version (e.g., 0.126.0)         | `0.126.0`     |
+| `--replace-config` | Replace package config with custom config | `false`       |
+| `--help`           | Show usage information                    | -             |
 
 ## Requirements
 
-- **OS**: Linux (Ubuntu, Debian, RHEL, CentOS, Amazon Linux, SUSE)
+- **OS**: Linux (Ubuntu, Debian, RHEL, CentOS, Oracle Linux, Amazon Linux, SUSE)
 - **Architecture**: x86_64, amd64, aarch64, arm64
 - **Privileges**: sudo recommended for full functionality
 - **Tools**: curl, systemctl
@@ -62,10 +62,25 @@ sudo ./otel-contrib-install.sh --version 0.125.0 --no-replace-config
 
 1. Detects OS and architecture
 2. Removes existing installations cleanly
-3. Downloads appropriate collector binary
+3. Downloads appropriate otelcol-contrib binary
 4. Installs via package manager (deb/rpm) or tar
-5. Downloads and installs custom config (by default)
+5. Optionally downloads and installs custom config
 6. Sets up systemd service
+
+## Configuration
+
+### Default Behavior
+
+By default, the script keeps the package's default configuration. To use a custom configuration, add the `--replace-config` flag.
+
+### Config Replacement
+
+When using `--replace-config`:
+
+- Downloads custom config from the repository
+- Creates timestamped backup of existing config (e.g., `config_20241201_143022.yaml`)
+- Replaces the config with the custom version
+- Backup is stored in the same directory as the config file
 
 ## Post-Installation
 
