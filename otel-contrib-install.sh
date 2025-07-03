@@ -499,6 +499,35 @@ create_config() {
     fi
 }
 
+# Backup existing config before package installation (to prevent loss during package install)
+backup_existing_config_before_install() {
+    # Check if config file already exists
+    if [[ -f "$OTEL_CONFIG_FILE" ]]; then
+        # Create backup with timestamp using same format as replace_config function
+        local backup_file="${OTEL_CONFIG_DIR}/config_$(date +%Y%m%d_%H%M%S).yaml"
+        log_info "Found existing config: $OTEL_CONFIG_FILE"
+        log_info "Creating backup before installation: $backup_file"
+        
+        # Ensure config directory exists
+        if [[ ! -d "$OTEL_CONFIG_DIR" ]]; then
+            if ! mkdir -p "$OTEL_CONFIG_DIR"; then
+                log_warning "Failed to create config directory for backup: $OTEL_CONFIG_DIR"
+                return 1
+            fi
+        fi
+        
+        if cp "$OTEL_CONFIG_FILE" "$backup_file" 2>/dev/null; then
+            log_success "Existing config backed up to: $backup_file"
+        else
+            log_warning "Failed to backup existing config - installation will continue"
+        fi
+    else
+        log_info "No existing config file found at: $OTEL_CONFIG_FILE"
+    fi
+    
+    return 0
+}
+
 # Replace the package-created config with our custom one
 replace_config() {
     local temp_config="config.yaml"
@@ -655,15 +684,7 @@ check_and_remove_existing() {
     if [[ -f "$OTEL_CONFIG_FILE" ]]; then
         existing_config=true
         log_info "Found existing config: $OTEL_CONFIG_FILE"
-        log_info "Backing up and removing existing config"
-        
-        # Create backup with timestamp
-        local backup_file="${OTEL_CONFIG_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
-        if cp "$OTEL_CONFIG_FILE" "$backup_file" 2>/dev/null; then
-            log_info "Config backed up to: $backup_file"
-        else
-            log_warning "Failed to backup existing config"
-        fi
+        log_info "Removing existing config (backup already created)"
         
         if ! rm -f "$OTEL_CONFIG_FILE"; then
             log_warning "Failed to remove existing config: $OTEL_CONFIG_FILE"
@@ -763,51 +784,61 @@ main() {
         sleep 0.5
     fi
     
-    # Step 2: Check and remove existing installation
+    # Step 2: Backup existing config before cleanup (always, regardless of replace-config mode)
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 2 8 "Checking for existing installation" "running"
+        otel_progress 2 8 "Checking for existing configuration" "running"
     fi
-    check_and_remove_existing
+    backup_existing_config_before_install
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 2 8 "Existing installation cleanup completed" "success"
+        otel_progress 2 8 "Configuration backup completed" "success"
         sleep 0.5
     fi
     
-    # Step 3: Detect OS
+    # Step 3: Check and remove existing installation
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 3 8 "Scanning system environment" "running"
+        otel_progress 3 8 "Checking for existing installation" "running"
+    fi
+    check_and_remove_existing
+    if [[ "$MODE" == "interactive" ]]; then
+        otel_progress 3 8 "Existing installation cleanup completed" "success"
+        sleep 0.5
+    fi
+    
+    # Step 4: Detect OS
+    if [[ "$MODE" == "interactive" ]]; then
+        otel_progress 4 8 "Scanning system environment" "running"
     fi
     if ! check_os; then
         if [[ "$MODE" == "interactive" ]]; then
-            otel_progress 3 8 "Unsupported OS detected" "error"
+            otel_progress 4 8 "Unsupported OS detected" "error"
         fi
         log_error "Unsupported operating system"
         otel_error
     fi
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 3 8 "Linux system detected: $os_name" "success"
+        otel_progress 4 8 "Linux system detected: $os_name" "success"
         sleep 0.5
     fi
     
-    # Step 4: Detect architecture
+    # Step 5: Detect architecture
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 4 8 "Analyzing hardware architecture" "running"
+        otel_progress 5 8 "Analyzing hardware architecture" "running"
     fi
     if ! check_architecture; then
         if [[ "$MODE" == "interactive" ]]; then
-            otel_progress 4 8 "Unsupported architecture: $(uname -m)" "error"
+            otel_progress 5 8 "Unsupported architecture: $(uname -m)" "error"
         fi
         log_error "Unsupported architecture: $(uname -m)"
         otel_error
     fi
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 4 8 "Architecture: $arch_name, Package: $package_manager" "success"
+        otel_progress 5 8 "Architecture: $arch_name, Package: $package_manager" "success"
         sleep 0.5
     fi
     
-    # Step 5: Download OTEL Collector
+    # Step 6: Download OTEL Collector
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 5 8 "Downloading OTEL Collector" "running"
+        otel_progress 6 8 "Downloading OTEL Collector" "running"
         echo
         echo -e "${CYAN}[OTEL]${NC} ${BOLD}Download Source:${NC} ${YELLOW}$download_url${NC}"
         echo -e "${CYAN}[OTEL]${NC} ${BOLD}Target File:${NC} ${YELLOW}$download_file${NC}"
@@ -815,17 +846,17 @@ main() {
     fi
     if ! download_otel; then
         if [[ "$MODE" == "interactive" ]]; then
-            otel_progress 5 8 "Download failed" "error"
+            otel_progress 6 8 "Download failed" "error"
         fi
         otel_error
     fi
     if [[ "$MODE" == "interactive" ]]; then
-        otel_progress 5 8 "Downloaded: $download_file" "success"
+        otel_progress 6 8 "Downloaded: $download_file" "success"
         sleep 0.5
     fi
     
-    # Step 6: Create config file in current directory (only if replacing config)
-    local step_num=6
+    # Step 7: Create config file in current directory (only if replacing config)
+    local step_num=7
     if [[ "$REPLACE_CONFIG" == "true" ]]; then
         if [[ "$MODE" == "interactive" ]]; then
             otel_progress $step_num 8 "Creating configuration file" "running"
@@ -838,7 +869,7 @@ main() {
         ((step_num++))
     fi
     
-    # Step 7: Install OTEL Collector
+    # Step 8: Install OTEL Collector
     if [[ "$MODE" == "interactive" ]]; then
         otel_progress $step_num 8 "Installing OTEL Collector" "running"
     fi
@@ -854,7 +885,7 @@ main() {
     fi
     ((step_num++))
     
-    # Step 8: Replace config file with our custom one (only if replacing config)
+    # Step 9: Replace config file with our custom one (only if replacing config)
     if [[ "$REPLACE_CONFIG" == "true" ]]; then
         if [[ "$MODE" == "interactive" ]]; then
             otel_progress $step_num 8 "Installing custom configuration" "running"

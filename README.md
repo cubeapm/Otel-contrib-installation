@@ -61,11 +61,12 @@ sudo ./otel-contrib-install.sh --version 0.125.0 --replace-config
 ## What It Does
 
 1. Detects OS and architecture
-2. Removes existing installations cleanly
-3. Downloads appropriate otelcol-contrib binary
-4. Installs via package manager (deb/rpm) or tar
-5. Optionally downloads and installs custom config
-6. Sets up systemd service
+2. Backs up any existing configuration
+3. Removes existing installations cleanly
+4. Downloads appropriate otelcol-contrib binary
+5. Installs via package manager (deb/rpm) or tar
+6. Optionally downloads and installs custom config
+7. Sets up systemd service
 
 ## Configuration
 
@@ -78,9 +79,8 @@ By default, the script keeps the package's default configuration. To use a custo
 When using `--replace-config`:
 
 - Downloads custom config from the repository
-- Creates timestamped backup of existing config (e.g., `config_20241201_143022.yaml`)
+- Creates additional timestamped backup during replacement process
 - Replaces the config with the custom version
-- Backup is stored in the same directory as the config file
 
 ## Post-Installation
 
