@@ -381,7 +381,7 @@ check_architecture() {
 
 # Download the OTEL Collector file
 download_otel() {
-    status_code="$(curl --fail --no-progress-meter -L -o "$download_file" -w "%{http_code}" "$download_url" 2>/dev/null || echo "000")"
+    status_code="$(curl --fail -sS -L -o "$download_file" -w "%{http_code}" "$download_url" 2>/dev/null || echo "000")"
     
     if [[ $status_code == "200" ]]; then
         return 0
@@ -471,7 +471,7 @@ create_config() {
     
     # Download the config file
     local status_code
-    status_code="$(curl --fail --no-progress-meter -L -o "$temp_config" -w "%{http_code}" "$OTEL_CONFIG_URL" 2>/dev/null || echo "000")"
+    status_code="$(curl --fail -sS -L -o "$temp_config" -w "%{http_code}" "$OTEL_CONFIG_URL" 2>/dev/null || echo "000")"
     
     if [[ $status_code == "200" ]]; then
         log_success "Configuration file downloaded successfully: $temp_config"
