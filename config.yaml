@@ -26,6 +26,8 @@ receivers:
       server.address:
         enabled: true
     metrics:
+      redis.cmd.usec:
+        enabled: true
       redis.cmd.calls:
         enabled: true
 
@@ -36,6 +38,8 @@ receivers:
       server.address:
         enabled: true
     metrics:
+      redis.cmd.usec:
+        enabled: true
       redis.cmd.calls:
         enabled: true
 
